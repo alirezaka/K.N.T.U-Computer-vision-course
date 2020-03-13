@@ -10,7 +10,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from concurrent import futures
 
-dataset = './dataset/train'
+dataset = './dataset/train/'
 train_labels = []
 train_imgs_list = []
 
@@ -21,15 +21,13 @@ files = os.listdir(dataset)
 files.sort()
 
 for idx, file in enumerate(files):
-    train_images_list = os.listdir(dataset + "/" + file)
+    train_images_list = os.listdir(dataset + file)
 
     train_images_list.sort()
 
-    train_labels.extend([idx for _ in range(len(os.listdir(dataset + "/" + file)))])
+    train_labels.extend([idx for _ in range(len(os.listdir(dataset + file)))])
 
     train_imgs_list.append(train_images_list)
-# print(len(train_labels))
-# exit(0)
 
 input_data = []
 
@@ -39,15 +37,14 @@ def train_processing(idx, file):
     temp = []
 
     for addr in train_imgs_list[idx]:
-        I = cv2.imread(os.path.join('./dataset/train/' + file, addr))
-        I = cv2.resize(I, (32, 32))
+        I = cv2.imread(os.path.join(dataset + file, addr))
+        # I = cv2.resize(I, (32, 32))
         I = cv2.cvtColor(I, cv2.COLOR_BGR2GRAY)
         lbp = feature.local_binary_pattern(I, numPoints, radius)
         (H, hogImage_train) = feature.hog(I, orientations=9, pixels_per_cell=(8, 8),
                                           cells_per_block=(2, 2), transform_sqrt=True, block_norm="L1",
                                           visualize=True)
         temp.append(np.hstack([H, lbp.ravel()]))
-        # return np.hstack([H, lbp.ravel()])
     return temp
 
 
@@ -90,7 +87,6 @@ with futures.ProcessPoolExecutor() as executor:
             C = result[0]['C']
             gamma = result[0]['gamma']
 
-# exit(0)
 
 classifier = SVC(C=C, gamma=gamma)  # C = 100, gamma = 1e-5
 file_name = 'saved_svm.sav'
@@ -99,7 +95,7 @@ classifier.fit(X, train_labels)
 
 joblib.dump(classifier, file_name)
 
-test_dir = './dataset/test'
+test_dir = './dataset/test/'
 files = os.listdir(test_dir)
 files.sort()
 
@@ -107,12 +103,11 @@ test_labels = []
 test_imgs_list = []
 
 for idx, file in enumerate(files):
-    test_images_list = os.listdir(test_dir + "/" + file)
+    test_images_list = os.listdir(test_dir + file)
 
     test_images_list.sort()
 
-    test_labels.extend([idx for _ in range(len(os.listdir(test_dir + "/" + file)))])
-    # train_labels.extend( [int( addr[2] ) for addr in (train_images_list)] )
+    test_labels.extend([idx for _ in range(len(os.listdir(test_dir + file)))])
 
     test_imgs_list.append(test_images_list)
 
@@ -124,8 +119,8 @@ def test_processing(idx, file):
     temp = []
 
     for addr in test_imgs_list[idx]:
-        J = cv2.imread(os.path.join('./dataset/test/' + file, addr))
-        J = cv2.resize(J, (32, 32))
+        J = cv2.imread(os.path.join(test_dir + file, addr))
+        # J = cv2.resize(J, (32, 32))
         J = cv2.cvtColor(J, cv2.COLOR_BGR2GRAY)
         K = feature.local_binary_pattern(J, numPoints, radius)
         (T, hogImage_test) = feature.hog(J, orientations=9, pixels_per_cell=(8, 8),
@@ -150,7 +145,7 @@ test_labels = [test_labels[i] for i in idx]
 test_input = scaler.fit_transform(test_input)
 results = classifier.predict(test_input)
 print('predictions: ', results)
-print("train lables: ", train_labels)
+print("train lables: ", list(set(train_labels)))
 print("test lables: ", test_labels)
 print("Accuracy: ", (np.sum(results == test_labels) / len(results)) * 100, "%")
 
@@ -162,6 +157,6 @@ test_labels = [train_labels[i] for i in idx]
 test_input = scaler.fit_transform(test_input)
 results = classifier.predict(test_input)
 print('predictions: ', results)
-print("train lables: ", train_labels)
+print("train lables: ", list(set(train_labels)))
 print("test lables: ", test_labels)
 print("Accuracy: ", (np.sum(results == test_labels) / len(results)) * 100, "%")

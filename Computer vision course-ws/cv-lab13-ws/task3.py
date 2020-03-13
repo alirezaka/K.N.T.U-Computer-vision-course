@@ -49,8 +49,8 @@ with futures.ProcessPoolExecutor() as executor:
 scaler = StandardScaler()
 X = scaler.fit_transform(input_data)
 
-C_range = np.logspace(-2, 6, 13)
-gamma_range = np.logspace(-7, 1, 13)
+C_range = np.logspace(-2, 10, 13)
+gamma_range = np.logspace(-9, 3, 13)
 cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
 
 max_score = 0
@@ -120,13 +120,15 @@ with futures.ProcessPoolExecutor() as executor:
     for result in results:
         test_data.extend(result)
 
+print("-------------------------")
+
 idx = [random.randint(0, len(test_data) - 1) for i in range(20)]
 test_input = [test_data[i] for i in idx]
 test_labels = [test_labels[i] for i in idx]
 test_input = scaler.fit_transform(test_input)
 results = classifier.predict(test_input)
 print('predictions: ', results)
-print("train lables: ", train_labels)
+print("train lables: ", list(set(train_labels)))
 print("test lables: ", test_labels)
 print("Accuracy: ", (np.sum(results == test_labels) / len(results)) * 100, "%")
 
@@ -138,6 +140,6 @@ test_labels = [train_labels[i] for i in idx]
 test_input = scaler.fit_transform(test_input)
 results = classifier.predict(test_input)
 print('predictions: ', results)
-print("train lables: ", train_labels)
+print("train lables: ", list(set(train_labels)))
 print("test lables: ", test_labels)
 print("Accuracy: ", (np.sum(results == test_labels) / len(results)) * 100, "%")
